@@ -14,92 +14,39 @@ import org.schabi.newpipe.extractor.MediaFormat;
 import org.schabi.newpipe.extractor.utils.LogUtil;
 
 public class SubtitleDeduplicator {
-    private static File CACHE_DIR = new File(System.getProperty("java.io.tmpdir"), "pipepipe_subtitle_cache");
+    private static String subCacheDir = "pipepipe_subtitle_cache";
+
+    private static File CACHE_DIR = new File(System.getProperty("java.io.tmpdir"), subCacheDir);
 
     static {
         if (!CACHE_DIR.exists()) CACHE_DIR.mkdirs();
     }
 
     public static void setCacheDirPath(String path) {
-        CACHE_DIR = new File(path, "pipepipe_subtitle_cache");
+        CACHE_DIR = new File(path, subCacheDir);
         if (!CACHE_DIR.exists()) CACHE_DIR.mkdirs();
     }
 
-    public static String process(String subtitleUrl, final MediaFormat format) throws IOException {
-        //String ext = getExtensionFromUrl(subtitleUrl);
-        String ext = "." + format;
-        String md5Url = md5(subtitleUrl);
-        LogUtil.logWithMessage("tree-test02", "ext=" + ext + ",md5Url=" + md5Url);
-
-        String filename = md5Url + ext;
-        LogUtil.logWithMessage("tree-test02", "filename=" + filename);
-        File cacheFile = new File(CACHE_DIR, filename);
-
-        // If file exists, return it
-        if (cacheFile.exists()) {
-            return "file://" + cacheFile.getAbsolutePath();
-        }
-
-        // Download and compare
-        String downloadedContent = downloadText(subtitleUrl);
-        //LogUtil.logWithMessage("tree-test02", "downloadedContent=" + downloadedContent);
-
-        String finalContent = "";
-        if (true == containsDuplicateTtmlEntries(downloadedContent)) {
-            LogUtil.logWithMessage("tree-test02", "find duplication subtitle");
-            finalContent = deduplicateTtml(downloadedContent);
-        } else {
-            LogUtil.logWithMessage("tree-test02", "Not find duplication subtitle");
-            finalContent = parseAndDeduplicateSubtitle(downloadedContent);
-        }
-
-        // Deduplicate: if same, write once
-        //String finalContent = parseAndDeduplicateSubtitle(downloadedContent);
-        LogUtil.logWithMessage("tree-test02", "finalContent=" + finalContent);
-
-        // 确保父目录存在
-        File parentDir = cacheFile.getParentFile();
-        if (!parentDir.exists()) {
-            boolean success = parentDir.mkdirs();
-            LogUtil.logWithMessage("tree-test02", "创建父目录: " + parentDir.getAbsolutePath() + " 是否成功: " + success);
-        } else {
-            LogUtil.logWithMessage("tree-test02", "parentDir exists: " + parentDir.getAbsolutePath());
-        }
-
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-                new FileOutputStream(cacheFile), StandardCharsets.UTF_8))) {
-            writer.write(finalContent);
-            LogUtil.logWithMessage("tree-test02", "成功写入字幕缓存: " + cacheFile.getAbsolutePath());
-        } catch (IOException e) {
-            LogUtil.logWithMessage("tree-test02", "写入字幕文件失败: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        return "file://" + cacheFile.getAbsolutePath();
-    }
-
-    private static String downloadText(String urlStr) throws IOException {
+    /**
+     * Downloads plain text content from a remote HTTP(S) URL.
+     * This method does not support local file paths or 'file://' URLs.
+     *
+     * @param urlStr the full HTTP or HTTPS URL to download from
+     * @return the content as a String, or null if download fails
+     */
+    private static String downloadRemoteText(String urlStr) {
         StringBuilder sb = new StringBuilder();
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(new URL(urlStr).openStream(), StandardCharsets.UTF_8))) {
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(
+                new URL(urlStr).openStream(), StandardCharsets.UTF_8))) {
             String line;
             while ((line = in.readLine()) != null) {
                 sb.append(line).append("\n");
             }
+            return sb.toString();
+        } catch (IOException e) {
+            LogUtil.logWithMessage("SubtitleDownloader", "Failed to download subtitle: " + e.getMessage());
+            return null;
         }
-        return sb.toString();
-    }
-
-    private static String parseAndDeduplicateSubtitle(String input) {
-        // ⚠️ 这里只是最简单的占位去重逻辑，后续你可以自定义更复杂的规则
-        // 例如 VTT/SRT 重复片段识别、相邻内容合并等
-        return input.trim();
-    }
-
-    private static String getExtensionFromUrl(String url) {
-        int qIndex = url.indexOf('?');
-        String cleaned = (qIndex > 0) ? url.substring(0, qIndex) : url;
-        int dotIndex = cleaned.lastIndexOf('.');
-        return (dotIndex > 0) ? cleaned.substring(dotIndex) : ".vtt"; // 默认.vtt
     }
 
     // make the long url to be short
@@ -112,6 +59,20 @@ public class SubtitleDeduplicator {
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("MD5 not supported", e);
+        }
+    }
+
+    //
+    public static boolean isThereDuplicatedSubtitle(String remoteSubtitleUrl) {
+        String downloadedContent = downloadRemoteText(remoteSubtitleUrl);
+        //LogUtil.logWithMessage("tree-test02", "downloadedContent=" + downloadedContent);
+
+        if (true == containsDuplicateTtmlEntries(downloadedContent)) {
+            LogUtil.logWithMessage("tree-test02", "find duplication subtitle");
+            return true;
+        } else {
+            LogUtil.logWithMessage("tree-test02", "Not find duplication subtitle");
+            return false;
         }
     }
 
@@ -134,7 +95,9 @@ public class SubtitleDeduplicator {
      * 原始函数：传入 TTML 字幕内容字符串，检测是否有重复
      */
     public static boolean containsDuplicateTtmlEntries(String subtitleContent) {
-        if (subtitleContent == null || subtitleContent.isEmpty()) return false;
+        if (subtitleContent == null || subtitleContent.isEmpty()) {
+            return false;
+        }
 
         Pattern pattern = Pattern.compile(
                 "<p[^>]*begin=\"([^\"]+)\"[^>]*end=\"([^\"]+)\"[^>]*>(.*?)</p>",
@@ -149,7 +112,9 @@ public class SubtitleDeduplicator {
             String content = matcher.group(3).trim().replaceAll("\\s+", " ");
             String key = begin + "|" + end + "|" + content;
 
-            if (seen.contains(key)) return true;
+            if (seen.contains(key)) {
+                return true;
+            }
             seen.add(key);
         }
 
@@ -215,5 +180,83 @@ public class SubtitleDeduplicator {
         return result.toString();
     }
 
+    public static String deduplicateSubtitleThenStoreItToCachefile(
+                                                final String subtitleUrl,
+                                                final MediaFormat format) {
+        File cacheFile = getCachefileName(subtitleUrl, format);
+
+        String cacheFilePathForExoplayer = "file://" + cacheFile.getAbsolutePath();
+
+        if (true == doesTheSubtitleEverDeduplicated(cacheFile)) {
+            return cacheFilePathForExoplayer;
+        }
+
+        if (false == ensureItsParentDirExist(cacheFile)) {
+            LogUtil.logWithMessage("tree-test02", cacheFile.getAbsolutePath() + ": its parent dir Not exist!");
+            return null;
+        }
+
+        String downloadedContent = downloadRemoteText(subtitleUrl);
+
+        String finalContent = deduplicateTtml(downloadedContent);
+
+        if (null == writeDeduplicatedContentToCachefile(finalContent, cacheFile)) {
+            return cacheFilePathForExoplayer;
+        } else {
+            return null;
+        }
+    }
+
+    private static File getCachefileName(String subtitleUrl, final MediaFormat format) {
+        //String ext = getExtensionFromUrl(subtitleUrl);
+        String ext = "." + format;
+        String md5Url = md5(subtitleUrl);
+        LogUtil.logWithMessage("tree-test02", "ext=" + ext + ",md5Url=" + md5Url);
+
+        String filename = md5Url + ext;
+        LogUtil.logWithMessage("tree-test02", "filename=" + filename);
+        File tempCacheFile = new File(CACHE_DIR, filename);
+
+        return tempCacheFile;
+    }
+
+    private static boolean doesTheSubtitleEverDeduplicated(File tempCacheFile) {
+        if (tempCacheFile.exists()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static boolean ensureItsParentDirExist(File tempCacheFile) {
+        File parentDir = tempCacheFile.getParentFile();
+
+        if (parentDir.exists()) {
+            return true;
+        } else {
+            boolean success = parentDir.mkdirs();
+            if (true == success) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    private static String writeDeduplicatedContentToCachefile(
+                                                String subtitleContent,
+                                                File tempCacheFile) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream(tempCacheFile), StandardCharsets.UTF_8))) {
+            writer.write(subtitleContent);
+            LogUtil.logWithMessage("tree-test02", "succeed to write the cache file: " + tempCacheFile.getAbsolutePath());
+            return null;//ok
+        } catch (IOException e) {
+            //LogUtil.logWithMessage("tree-test02", "fail to write the cache file: " + e.getMessage());
+            e.printStackTrace();
+            String errorMessage = e.getMessage();
+            return errorMessage;
+        }
+    }
 
 }
