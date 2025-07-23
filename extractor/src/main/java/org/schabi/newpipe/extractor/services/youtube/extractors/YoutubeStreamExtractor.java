@@ -699,18 +699,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                 String remoteSubtitleUrl = cleanUrl + "&fmt=" + format.getSuffix();
 
                 String subtitleUrl = null;
-
-                if (false == SubtitleDeduplicator.isThereDuplicatedSubtitle(remoteSubtitleUrl)) {
-                    subtitleUrl = remoteSubtitleUrl;
-                } else {
-                    String localSubtitleUrl = SubtitleDeduplicator.deduplicateSubtitleThenStoreItToCachefile(remoteSubtitleUrl, format);
-                    if (null != localSubtitleUrl) {
-                        subtitleUrl = localSubtitleUrl;
-                    } else {
-                        LogUtil.logWithMessage("tree-test02", "fail to get local subtitle url.");
-                        continue;
-                    }
-                }
+                subtitleUrl = SubtitleDeduplicator.checkAndDeduplicate(remoteSubtitleUrl, format);
 
                 subtitlesToReturn.add(new SubtitlesStream.Builder()
                         .setContent(subtitleUrl, true)

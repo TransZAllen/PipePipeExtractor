@@ -27,6 +27,22 @@ public class SubtitleDeduplicator {
         if (!CACHE_DIR.exists()) CACHE_DIR.mkdirs();
     }
 
+    public static String checkAndDeduplicate(final String remoteSubtitleUrl,
+                                            final MediaFormat format) {
+        if (false == isThereDuplicatedSubtitle(remoteSubtitleUrl)) {
+            return remoteSubtitleUrl;
+        }
+
+        String localSubtitleUrl = deduplicateSubtitleThenStoreItToCachefile(
+                                                                remoteSubtitleUrl,
+                                                                format);
+        if (null == localSubtitleUrl) {
+            return remoteSubtitleUrl;
+        }
+
+        return localSubtitleUrl;
+    }
+
     /**
      * Downloads plain text content from a remote HTTP(S) URL.
      * This method does not support local file paths or 'file://' URLs.
@@ -203,19 +219,27 @@ public class SubtitleDeduplicator {
         if (null == writeDeduplicatedContentToCachefile(finalContent, cacheFile)) {
             return cacheFilePathForExoplayer;
         } else {
+            LogUtil.logWithMessage("tree-test02", "fail to write cachefile!");
             return null;
         }
     }
 
-    private static File getCachefileName(String subtitleUrl, final MediaFormat format) {
-        //String ext = getExtensionFromUrl(subtitleUrl);
-        String ext = "." + format;
-        String md5Url = md5(subtitleUrl);
-        LogUtil.logWithMessage("tree-test02", "ext=" + ext + ",md5Url=" + md5Url);
+    private static String computeShorterFilename(String subtitleUrl, final MediaFormat format) {
+        String fileExtension = "." + format;
 
-        String filename = md5Url + ext;
-        LogUtil.logWithMessage("tree-test02", "filename=" + filename);
-        File tempCacheFile = new File(CACHE_DIR, filename);
+        String md5Url = md5(subtitleUrl);
+        String baseName = md5Url;
+
+        String filename = baseName + fileExtension;
+
+        return filename;
+    }
+
+    private static File getCachefileName(String subtitleUrl, MediaFormat format) {
+        String cachefilename = computeShorterFilename(subtitleUrl, format);
+        LogUtil.logWithMessage("tree-test02", "cachefilename=" + cachefilename);
+
+        File tempCacheFile = new File(CACHE_DIR, cachefilename);
 
         return tempCacheFile;
     }
