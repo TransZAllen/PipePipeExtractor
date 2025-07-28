@@ -270,10 +270,15 @@ public class SubtitleDeduplicator {
     private static String writeDeduplicatedContentToCachefile(
                                                 String subtitleContent,
                                                 File tempCacheFile) {
+        String result = writeContentToFile(subtitleContent, tempCacheFile);
+        return result;
+    }
+
+    private static String writeContentToFile(String content, File tempFile) {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-                new FileOutputStream(tempCacheFile), StandardCharsets.UTF_8))) {
-            writer.write(subtitleContent);
-            LogUtil.logWithMessage("tree-test02", "succeed to write the cache file: " + tempCacheFile.getAbsolutePath());
+                new FileOutputStream(tempFile), StandardCharsets.UTF_8))) {
+            writer.write(content);
+            LogUtil.logWithMessage("tree-test02", "succeed to write the cache file: " + tempFile.getAbsolutePath());
             return null;//ok
         } catch (IOException e) {
             //LogUtil.logWithMessage("tree-test02", "fail to write the cache file: " + e.getMessage());
