@@ -19,21 +19,25 @@ public class SubtitleDeduplicator {
     private static File CACHE_DIR = new File(System.getProperty("java.io.tmpdir"), subCacheDir);
 
     static {
-        if (!CACHE_DIR.exists()) CACHE_DIR.mkdirs();
+        if (false == CACHE_DIR.exists()) {
+            CACHE_DIR.mkdirs();
+        }
     }
 
     public static void setCacheDirPath(String path) {
         CACHE_DIR = new File(path, subCacheDir);
-        if (!CACHE_DIR.exists()) CACHE_DIR.mkdirs();
+        if (false == CACHE_DIR.exists()) {
+            CACHE_DIR.mkdirs();
+        }
     }
 
     public static String checkAndDeduplicate(final String remoteSubtitleUrl,
                                             final MediaFormat format) {
-        if (false == isThereDuplicatedSubtitle(remoteSubtitleUrl)) {
+        if (false == isItDuplicatedSubtitle(remoteSubtitleUrl)) {
             return remoteSubtitleUrl;
         }
 
-        String localSubtitleUrl = deduplicateSubtitleThenStoreItToCachefile(
+        String localSubtitleUrl = deduplicateSubtitleThenStoreToCachefile(
                                                                 remoteSubtitleUrl,
                                                                 format);
         if (null == localSubtitleUrl) {
@@ -78,12 +82,10 @@ public class SubtitleDeduplicator {
         }
     }
 
-    //
-    public static boolean isThereDuplicatedSubtitle(String remoteSubtitleUrl) {
+    public static boolean isItDuplicatedSubtitle(String remoteSubtitleUrl) {
         String downloadedContent = downloadRemoteText(remoteSubtitleUrl);
-        //LogUtil.logWithMessage("tree-test02", "downloadedContent=" + downloadedContent);
 
-        if (true == containsDuplicateTtmlEntries(downloadedContent)) {
+        if (true == containsDuplicatedEntries(downloadedContent)) {
             LogUtil.logWithMessage("tree-test02", "find duplication subtitle");
             return true;
         } else {
@@ -92,25 +94,19 @@ public class SubtitleDeduplicator {
         }
     }
 
-    /**
-     * 新增：传入字幕文件，检测是否有重复 TTML 条目
-     */
     public static boolean containsDuplicateTtmlEntries(File subtitleFile) {
         if (subtitleFile == null || !subtitleFile.exists()) return false;
 
         try {
             String content = readFileToString(subtitleFile);
-            return containsDuplicateTtmlEntries(content);
+            return containsDuplicatedEntries(content);
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
     }
 
-    /**
-     * 原始函数：传入 TTML 字幕内容字符串，检测是否有重复
-     */
-    public static boolean containsDuplicateTtmlEntries(String subtitleContent) {
+    public static boolean containsDuplicatedEntries(String subtitleContent) {
         if (subtitleContent == null || subtitleContent.isEmpty()) {
             return false;
         }
@@ -137,9 +133,6 @@ public class SubtitleDeduplicator {
         return false;
     }
 
-    /**
-     * 读取整个文件为字符串
-     */
     private static String readFileToString(File file) throws IOException {
         StringBuilder sb = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
@@ -156,14 +149,14 @@ public class SubtitleDeduplicator {
 
         try {
             String content = readFileToString(subtitleFile);
-            return deduplicateTtml(content);
+            return deduplicateContent(content);
         } catch (IOException e) {
             e.printStackTrace();
             return "";
         }
     }
 
-    public static String deduplicateTtml(String subtitleContent) {
+    public static String deduplicateContent(String subtitleContent) {
         if (subtitleContent == null || subtitleContent.isEmpty()) return subtitleContent;
 
         Pattern pattern = Pattern.compile(
@@ -196,14 +189,14 @@ public class SubtitleDeduplicator {
         return result.toString();
     }
 
-    public static String deduplicateSubtitleThenStoreItToCachefile(
+    public static String deduplicateSubtitleThenStoreToCachefile(
                                                 final String subtitleUrl,
                                                 final MediaFormat format) {
         File cacheFile = getCachefileName(subtitleUrl, format);
 
         String cacheFilePathForExoplayer = "file://" + cacheFile.getAbsolutePath();
 
-        if (true == doesTheSubtitleEverDeduplicated(cacheFile)) {
+        if (true == hasTheSubtitleBeenDeduplicatedBefore(cacheFile)) {
             return cacheFilePathForExoplayer;
         }
 
@@ -214,7 +207,7 @@ public class SubtitleDeduplicator {
 
         String downloadedContent = downloadRemoteText(subtitleUrl);
 
-        String finalContent = deduplicateTtml(downloadedContent);
+        String finalContent = deduplicateContent(downloadedContent);
 
         if (null == writeDeduplicatedContentToCachefile(finalContent, cacheFile)) {
             return cacheFilePathForExoplayer;
@@ -244,7 +237,7 @@ public class SubtitleDeduplicator {
         return tempCacheFile;
     }
 
-    private static boolean doesTheSubtitleEverDeduplicated(File tempCacheFile) {
+    private static boolean hasTheSubtitleBeenDeduplicatedBefore(File tempCacheFile) {
         if (tempCacheFile.exists()) {
             return true;
         } else {
