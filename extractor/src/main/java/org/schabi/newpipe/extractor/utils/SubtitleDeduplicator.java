@@ -14,14 +14,11 @@ import org.schabi.newpipe.extractor.MediaFormat;
 import org.schabi.newpipe.extractor.utils.LogUtil;
 
 public class SubtitleDeduplicator {
-    private static String subCacheDir = "pipepipe_subtitle_cache";
+    private static String subCacheDir = "subtitle_cache";
 
-    private static File CACHE_DIR = new File(System.getProperty("java.io.tmpdir"), subCacheDir);
-
+    private static File CACHE_DIR = null;
     static {
-        if (false == CACHE_DIR.exists()) {
-            CACHE_DIR.mkdirs();
-        }
+        setCacheDirPathDefault();
     }
 
     public static void setCacheDirPath(String path) {
@@ -29,6 +26,19 @@ public class SubtitleDeduplicator {
         if (false == CACHE_DIR.exists()) {
             CACHE_DIR.mkdirs();
         }
+    }
+
+    // e.g. //data/user/0/***/cache/subtitle_cache
+    public static void setCacheDirPathDefault() {
+        File defaultFile = new File(System.getProperty("java.io.tmpdir"));
+        String defaultPath = defaultFile.getAbsolutePath();
+
+        setCacheDirPath(defaultPath);
+    }
+
+    // e.g. //storage/emulated/0/Android/data/***/cache/subtitle_cache
+    public static void setCacheDirPathNotDefault(String path) {
+        setCacheDirPath(path);
     }
 
     public static String checkAndDeduplicate(final String remoteSubtitleUrl,
