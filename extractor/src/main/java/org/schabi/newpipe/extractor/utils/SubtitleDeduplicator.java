@@ -13,6 +13,21 @@ import java.util.*;
 import org.schabi.newpipe.extractor.MediaFormat;
 import org.schabi.newpipe.extractor.utils.LogUtil;
 
+/**
+ * SubtitleDeduplicator.java
+ *
+ * This file is responsible for checking if the subtitles
+ * contain any duplicate entries.
+ * 1) If duplicates are found, it performs the following steps:
+ *    downloads the subtitle, deduplicates it,
+ *    and stores it locally.
+ * 2) If no duplicates are found, no action is taken.
+ *
+ * Core Functions:
+ * - checkAndDeduplicate(): Checks for duplicate subtitles
+ *   and handles downloading, deduplication, and local storage.
+ */
+
 public class SubtitleDeduplicator {
     private static String subCacheDir = "subtitle_cache";
 
