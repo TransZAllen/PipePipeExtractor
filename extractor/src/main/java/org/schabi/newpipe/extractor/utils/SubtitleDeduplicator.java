@@ -136,11 +136,7 @@ public class SubtitleDeduplicator {
             return false;
         }
 
-        Pattern pattern = Pattern.compile(
-                "<p[^>]*begin=\"([^\"]+)\"[^>]*end=\"([^\"]+)\"[^>]*>(.*?)</p>",
-                Pattern.DOTALL
-        );
-        Matcher matcher = pattern.matcher(subtitleContent);
+        Matcher matcher = getTtmlMatcher(subtitleContent);
 
         Set<String> seen = new HashSet<>();
         while (matcher.find()) {
@@ -184,11 +180,7 @@ public class SubtitleDeduplicator {
     public static String deduplicateContent(String subtitleContent) {
         if (subtitleContent == null || subtitleContent.isEmpty()) return subtitleContent;
 
-        Pattern pattern = Pattern.compile(
-                "<p[^>]*begin=\"([^\"]+)\"[^>]*end=\"([^\"]+)\"[^>]*>(.*?)</p>",
-                Pattern.DOTALL
-        );
-        Matcher matcher = pattern.matcher(subtitleContent);
+        Matcher matcher = getTtmlMatcher(subtitleContent);
 
         Set<String> seen = new HashSet<>();
         StringBuilder result = new StringBuilder();
@@ -212,6 +204,18 @@ public class SubtitleDeduplicator {
 
         result.append(subtitleContent.substring(lastIndex));
         return result.toString();
+    }
+
+    private static Pattern defineTtmlSubtitlePattern() {
+        return Pattern.compile(
+            "<p[^>]*begin=\"([^\"]+)\"[^>]*end=\"([^\"]+)\"[^>]*>(.*?)</p>",
+            Pattern.DOTALL
+        );
+    }
+
+    private static Matcher getTtmlMatcher(String subtitleContent) {
+        Pattern pattern = defineTtmlSubtitlePattern();
+        return pattern.matcher(subtitleContent);
     }
 
     public static String deduplicateSubtitleThenStoreToCachefile(
