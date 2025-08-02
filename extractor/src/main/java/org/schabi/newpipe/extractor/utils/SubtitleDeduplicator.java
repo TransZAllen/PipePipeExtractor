@@ -148,10 +148,7 @@ public class SubtitleDeduplicator {
 
         Set<String> seen = new HashSet<>();
         while (matcher.find()) {
-            String begin = matcher.group(1).trim();
-            String end = matcher.group(2).trim();
-            String content = matcher.group(3).trim().replaceAll("\\s+", " ");
-            String key = begin + "|" + end + "|" + content;
+            String key = getSubtitleKeyOfTtml(matcher);
 
             if (seen.contains(key)) {
                 return true;
@@ -197,10 +194,7 @@ public class SubtitleDeduplicator {
         while (matcher.find()) {
             result.append(subtitleContent, lastIndex, matcher.start());
 
-            String begin = matcher.group(1).trim();
-            String end = matcher.group(2).trim();
-            String content = matcher.group(3).trim().replaceAll("\\s+", " ");
-            String key = begin + "|" + end + "|" + content;
+            String key = getSubtitleKeyOfTtml(matcher);
 
             if (!seen.contains(key)) {
                 result.append(matcher.group(0));
@@ -224,6 +218,14 @@ public class SubtitleDeduplicator {
     private static Matcher getTtmlMatcher(String subtitleContent) {
         Pattern pattern = defineTtmlSubtitlePattern();
         return pattern.matcher(subtitleContent);
+    }
+
+    private static String getSubtitleKeyOfTtml(Matcher matcher) {
+        String begin = matcher.group(1).trim();
+        String end = matcher.group(2).trim();
+        String content = matcher.group(3).trim().replaceAll("\\s+", " ");
+        String key = begin + "|" + end + "|" + content;
+        return key;
     }
 
     public static String deduplicateSubtitleThenStoreToCachefile(
