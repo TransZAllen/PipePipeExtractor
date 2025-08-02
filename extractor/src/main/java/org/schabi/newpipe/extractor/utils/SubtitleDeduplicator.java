@@ -53,6 +53,14 @@ public class SubtitleDeduplicator {
 
     // e.g. //storage/emulated/0/Android/data/***/cache/subtitle_cache
     public static void setCacheDirPathNotDefault(String path) {
+        if (null == path) {
+            return;
+        }
+
+        if (true == path.isEmpty()) {
+            return;
+        }
+
         setCacheDirPath(path);
     }
 
