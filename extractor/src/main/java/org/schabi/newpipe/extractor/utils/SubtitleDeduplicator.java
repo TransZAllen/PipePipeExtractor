@@ -53,11 +53,7 @@ public class SubtitleDeduplicator {
 
     // e.g. //storage/emulated/0/Android/data/***/cache/subtitle_cache
     public static void setCacheDirPathNotDefault(String path) {
-        if (null == path) {
-            return;
-        }
-
-        if (true == path.isEmpty()) {
+        if (true == stringIsNullOrEmpty(path)) {
             return;
         }
 
@@ -140,7 +136,7 @@ public class SubtitleDeduplicator {
     }
 
     public static boolean containsDuplicatedEntries(String subtitleContent) {
-        if (subtitleContent == null || subtitleContent.isEmpty()) {
+        if (true == stringIsNullOrEmpty(subtitleContent)) {
             return false;
         }
 
@@ -183,7 +179,9 @@ public class SubtitleDeduplicator {
     }
 
     public static String deduplicateContent(String subtitleContent) {
-        if (subtitleContent == null || subtitleContent.isEmpty()) return subtitleContent;
+        if (true == stringIsNullOrEmpty(subtitleContent)) {
+            return subtitleContent;
+        }
 
         Matcher matcher = getTtmlMatcher(subtitleContent);
 
@@ -206,6 +204,18 @@ public class SubtitleDeduplicator {
 
         result.append(subtitleContent.substring(lastIndex));
         return result.toString();
+    }
+
+    private static boolean stringIsNullOrEmpty(String inputString) {
+        if (null == inputString) {
+            return true;
+        }
+
+        if (true == inputString.isEmpty()) {
+            return true;
+        }
+
+        return false;
     }
 
     private static Pattern defineTtmlSubtitlePattern() {
