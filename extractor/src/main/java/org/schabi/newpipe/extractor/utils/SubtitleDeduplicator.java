@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -17,6 +18,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.schabi.newpipe.extractor.utils.Utils;
 import org.schabi.newpipe.extractor.MediaFormat;
 import org.schabi.newpipe.extractor.utils.LogUtil;
 
@@ -274,14 +276,41 @@ public class SubtitleDeduplicator {
     }
 
     private static String computeShorterFilename(String subtitleUrl, final MediaFormat format) {
-        String fileExtension = "." + format;
-
         String md5Url = md5(subtitleUrl);
         String baseName = md5Url;
 
-        String filename = baseName + fileExtension;
+        //String fileExtension = "." + format;
+        //String filename = baseName + fileExtension;
+        String key = "lang";
+        String languageCode = extractLanguageCode(subtitleUrl, key);
+
+        String filename = baseName
+                        + "&" + key + "="
+                        + languageCode
+                        + "&fmt="
+                        + format.getSuffix();
 
         return filename;
+    }
+
+    private static String extractLanguageCode(String remoteSubtitleUrl, String key) {
+        String languageCode = null;
+
+        try {
+            URL url = Utils.stringToURL(remoteSubtitleUrl);
+
+            String value = Utils.getQueryValue(url, key);
+
+            languageCode = value;
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            languageCode = "INVALID_URL";
+        } catch (Exception e) {
+            e.printStackTrace();
+            languageCode = "UNKNOWN_ERROR";
+        }
+
+        return languageCode;
     }
 
     private static File getCachefileName(String subtitleUrl, MediaFormat format) {
