@@ -59,6 +59,7 @@ import static java.util.Collections.singletonList;
 import static org.schabi.newpipe.extractor.services.youtube.ItagItem.APPROX_DURATION_MS_UNKNOWN;
 import static org.schabi.newpipe.extractor.services.youtube.ItagItem.CONTENT_LENGTH_UNKNOWN;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.*;
+import static org.schabi.newpipe.extractor.services.youtube.YoutubeService.getTempLocalization;
 import static org.schabi.newpipe.extractor.utils.Utils.EMPTY_STRING;
 import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
 
@@ -793,46 +794,6 @@ public class YoutubeStreamExtractor extends StreamExtractor {
         watchDataCache.streamType = streamType;
     }
 
-    public MultiInfoItemsCollector getRelatedItemsFromResults(JsonArray results) throws ExtractionException {
-        try {
-            final MultiInfoItemsCollector collector = new MultiInfoItemsCollector(getServiceId());
-
-            final TimeAgoParser timeAgoParser = getTimeAgoParser();
-            results.stream()
-                    .filter(JsonObject.class::isInstance)
-                    .map(JsonObject.class::cast)
-                    .map(result -> {
-                        if (result.has("compactVideoRenderer")) {
-                            return new YoutubeStreamInfoItemExtractor(
-                                    result.getObject("compactVideoRenderer"), timeAgoParser);
-                        } else if (result.has("compactRadioRenderer")) {
-                            return new YoutubeMixOrPlaylistInfoItemExtractor(
-                                    result.getObject("compactRadioRenderer"));
-                        } else if (result.has("compactPlaylistRenderer")) {
-                            return new YoutubeMixOrPlaylistInfoItemExtractor(
-                                    result.getObject("compactPlaylistRenderer"));
-                        } else if (result.has("lockupViewModel")) {
-                            final JsonObject lockupViewModel = result.getObject("lockupViewModel");
-                            if ("LOCKUP_CONTENT_TYPE_PLAYLIST".equals(
-                                    lockupViewModel.getString("contentType"))) {
-                                return new YoutubeMixOrPlaylistLockupInfoItemExtractor(
-                                        lockupViewModel);
-                            }
-                        }
-                        return null;
-                    })
-                    .filter(Objects::nonNull)
-                    .forEach(collector::commit);
-
-            if (ServiceList.YouTube.getFilterTypes().contains("related_item")) {
-                collector.applyBlocking(ServiceList.YouTube.getStreamKeywordFilter(), ServiceList.YouTube.getStreamChannelFilter(), ServiceList.YouTube.isFilterShorts());
-            }
-            return collector;
-        } catch (final Exception e) {
-            throw new ParsingException("Could not get related videos", e);
-        }
-    }
-
     @Nullable
     @Override
     public MultiInfoItemsCollector getRelatedItems() throws ExtractionException {
@@ -872,6 +833,10 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                                     lockupViewModel.getString("contentType"))) {
                                 return new YoutubeMixOrPlaylistLockupInfoItemExtractor(
                                         lockupViewModel);
+                            }
+                            else if ("LOCKUP_CONTENT_TYPE_VIDEO".equals(
+                                    lockupViewModel.getString("contentType"))){
+                                return new YoutubeLockupStreamInfoItemExtractor(lockupViewModel, timeAgoParser);
                             }
                         }
                         return null;
@@ -923,34 +888,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
     private static final String SIGNATURE_CIPHER = "signatureCipher";
     private static final String CIPHER = "cipher";
 
-    private static final List<Localization> SUPPORTED_LANGUAGES = Localization.listFrom(
-            "af", "am", "ar", "az", "be", "bg", "bn", "bs", "ca", "cs", "da", "de",
-            "el", "en", "en-GB", "es", "es-419", "es-US", "et", "eu", "fa", "fi", "fil", "fr",
-            "fr-CA", "gl", "gu", "hi", "hr", "hu", "hy", "id", "is", "it", "iw", "ja",
-            "ka", "kk", "km", "kn", "ko", "ky", "lo", "lt", "lv", "mk", "ml", "mn",
-            "mr", "ms", "my", "ne", "nl", "no", "pa", "pl", "pt", "pt-PT", "ro", "ru",
-            "si", "sk", "sl", "sq", "sr", "sr-Latn", "sv", "sw", "ta", "te", "th", "tr",
-            "uk", "ur", "uz", "vi", "zh-CN", "zh-HK", "zh-TW", "zu"
-    );
 
-    public Localization getTempLocalization() {
-        final Localization preferredLocalization = NewPipe.getPreferredLocalization();
-
-        // Check the localization's language and country
-        if (SUPPORTED_LANGUAGES.contains(preferredLocalization)) {
-            return preferredLocalization;
-        }
-
-        // Fallback to the first supported language that matches the preferred language
-        for (final Localization supportedLanguage : SUPPORTED_LANGUAGES) {
-            if (supportedLanguage.getLanguageCode()
-                    .equals(preferredLocalization.getLanguageCode())) {
-                return supportedLanguage;
-            }
-        }
-
-        return Localization.DEFAULT;
-    }
 
     @Override
     public void onFetchPage(@Nonnull final Downloader downloader)

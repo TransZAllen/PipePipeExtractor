@@ -5,9 +5,9 @@ import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.addYoutubeHeaders;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.extractCookieValue;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.extractPlaylistTypeFromPlaylistId;
-import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getKey;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getValidJsonResponseBody;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.prepareDesktopJsonBuilder;
+import static org.schabi.newpipe.extractor.services.youtube.YoutubeService.getTempLocalization;
 import static org.schabi.newpipe.extractor.utils.Utils.EMPTY_STRING;
 import static org.schabi.newpipe.extractor.utils.Utils.getQueryValue;
 import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
@@ -71,7 +71,7 @@ public class YoutubeMixPlaylistExtractor extends PlaylistExtractor {
     @Override
     public void onFetchPage(@Nonnull final Downloader downloader)
             throws IOException, ExtractionException {
-        final Localization localization = getExtractorLocalization();
+        final Localization localization = getTempLocalization();
         final URL url = stringToURL(getUrl());
         final String mixPlaylistId = getId();
         final String videoId = getQueryValue(url, "v");
@@ -91,7 +91,7 @@ public class YoutubeMixPlaylistExtractor extends PlaylistExtractor {
         final Map<String, List<String>> headers = new HashMap<>();
         addYoutubeHeaders(headers);
 
-        final Response response = getDownloader().post(YOUTUBEI_V1_URL + "next?key=" + getKey()
+        final Response response = getDownloader().post(YOUTUBEI_V1_URL + "next?"
                 + DISABLE_PRETTY_PRINT_PARAMETER, headers, body, localization);
 
         initialData = JsonUtils.toJsonObject(getValidJsonResponseBody(response));
@@ -188,7 +188,7 @@ public class YoutubeMixPlaylistExtractor extends PlaylistExtractor {
         final String videoId = watchEndpoint.getString("videoId");
         final int index = watchEndpoint.getInt("index");
         final String params = watchEndpoint.getString("params");
-        final byte[] body = JsonWriter.string(prepareDesktopJsonBuilder(getExtractorLocalization(),
+        final byte[] body = JsonWriter.string(prepareDesktopJsonBuilder(getTempLocalization(),
                 getExtractorContentCountry())
                 .value("videoId", videoId)
                 .value("playlistId", playlistId)
@@ -197,7 +197,7 @@ public class YoutubeMixPlaylistExtractor extends PlaylistExtractor {
                 .done())
                 .getBytes(StandardCharsets.UTF_8);
 
-        return new Page(YOUTUBEI_V1_URL + "next?key=" + getKey(), null, null, cookies, body);
+        return new Page(YOUTUBEI_V1_URL + "next", null, null, cookies, body);
     }
 
     @Override
@@ -215,7 +215,7 @@ public class YoutubeMixPlaylistExtractor extends PlaylistExtractor {
         addYoutubeHeaders(headers);
 
         final Response response = getDownloader().post(page.getUrl(), headers, page.getBody(),
-                getExtractorLocalization());
+                getTempLocalization());
         final JsonObject ajaxJson = JsonUtils.toJsonObject(getValidJsonResponseBody(response));
         final JsonObject playlistJson = ajaxJson.getObject("contents")
                 .getObject("twoColumnWatchNextResults").getObject("playlist").getObject("playlist");
