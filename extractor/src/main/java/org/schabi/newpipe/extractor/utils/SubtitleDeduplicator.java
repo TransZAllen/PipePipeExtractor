@@ -250,7 +250,7 @@ public class SubtitleDeduplicator {
     public static String deduplicateSubtitleThenStoreToCachefile(
                                                 final String subtitleUrl,
                                                 final MediaFormat format) {
-        File cacheFile = getCachefileName(subtitleUrl, format);
+        File cacheFile = getDeduplicatedCachefileName(subtitleUrl, format);
 
         String cacheFilePathForExoplayer = "file://" + cacheFile.getAbsolutePath();
 
@@ -275,7 +275,9 @@ public class SubtitleDeduplicator {
         }
     }
 
-    private static String computeShorterFilename(String subtitleUrl, final MediaFormat format) {
+    private static String computeShorterFilename(String subtitleUrl,
+                                                final MediaFormat format,
+                                                String tag0) {
         String md5Url = md5(subtitleUrl);
         String baseName = md5Url;
 
@@ -285,6 +287,7 @@ public class SubtitleDeduplicator {
         String languageCode = extractLanguageCode(subtitleUrl, key);
 
         String filename = baseName
+                        + "-" + tag0
                         + "&" + key + "="
                         + languageCode
                         + "&fmt="
@@ -313,9 +316,18 @@ public class SubtitleDeduplicator {
         return languageCode;
     }
 
-    private static File getCachefileName(String subtitleUrl, MediaFormat format) {
-        String cachefilename = computeShorterFilename(subtitleUrl, format);
-        LogUtil.logWithMessage("tree-test02", "cachefilename=" + cachefilename);
+    private static File getDeduplicatedCachefileName(String subtitleUrl, MediaFormat format) {
+        String tag0 = "deduplicated";
+
+        File DeduplicatedFileName = getCachefileName(subtitleUrl,format,tag0);
+
+        return DeduplicatedFileName;
+    }
+
+    private static File getCachefileName(String subtitleUrl,
+                                        MediaFormat format,
+                                        String tag0) {
+        String cachefilename = computeShorterFilename(subtitleUrl, format, tag0);
 
         File tempCacheFile = new File(CACHE_DIR, cachefilename);
 
