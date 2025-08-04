@@ -286,6 +286,11 @@ public class SubtitleDeduplicator {
         String key = "lang";
         String languageCode = extractLanguageCode(subtitleUrl, key);
 
+        String autoTranslateLanguage = checkAutoTranslateLanguage(subtitleUrl);
+        if (null != autoTranslateLanguage) {
+            languageCode = autoTranslateLanguage;
+        }
+
         String filename = baseName
                         + "-" + tag0
                         + "&" + key + "="
@@ -294,6 +299,17 @@ public class SubtitleDeduplicator {
                         + format.getSuffix();
 
         return filename;
+    }
+
+    private static String checkAutoTranslateLanguage(String subtitleUrl) {
+        String key_autoTranslate = "tlang";
+        String language_autoTranslate = extractLanguageCode(subtitleUrl, key_autoTranslate);
+
+        if(true == stringIsNullOrEmpty(language_autoTranslate)) {
+            return null;
+        } else {
+            return language_autoTranslate;
+        }
     }
 
     private static String extractLanguageCode(String remoteSubtitleUrl, String key) {
