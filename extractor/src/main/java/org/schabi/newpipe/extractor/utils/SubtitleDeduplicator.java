@@ -69,15 +69,27 @@ public class SubtitleDeduplicator {
         setCacheDirPath(path);
     }
 
+    /**
+      * Checks if a subtitle contains duplicates,
+        deduplicates it if necessary, and caches it locally.
+      * @return The local file URL if deduplication and caching succeed,
+                otherwise the original URL.
+      */
     public static String checkAndDeduplicate(final String remoteSubtitleUrl,
                                             final MediaFormat format) {
-        if (false == isItDuplicatedSubtitle(remoteSubtitleUrl)) {
+        String downloadedContent = downloadRemoteText(remoteSubtitleUrl);
+        if (null == downloadedContent) {
+            return remoteSubtitleUrl;
+        }
+
+        if (false == containsDuplicatedEntries(downloadedContent)) {
             return remoteSubtitleUrl;
         }
 
         String localSubtitleUrl = deduplicateSubtitleThenStoreToCachefile(
-                                                                remoteSubtitleUrl,
-                                                                format);
+                                                        downloadedContent,
+                                                        remoteSubtitleUrl,
+                                                        format);
         if (null == localSubtitleUrl) {
             return remoteSubtitleUrl;
         }
@@ -117,18 +129,6 @@ public class SubtitleDeduplicator {
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("MD5 not supported", e);
-        }
-    }
-
-    public static boolean isItDuplicatedSubtitle(String remoteSubtitleUrl) {
-        String downloadedContent = downloadRemoteText(remoteSubtitleUrl);
-
-        if (true == containsDuplicatedEntries(downloadedContent)) {
-            LogUtil.logWithMessage("tree-test02", "find duplication subtitle");
-            return true;
-        } else {
-            LogUtil.logWithMessage("tree-test02", "Not find duplication subtitle");
-            return false;
         }
     }
 
@@ -247,7 +247,12 @@ public class SubtitleDeduplicator {
         return key;
     }
 
+    /**
+    * Deduplicates subtitle content and stores it in a local cache file.
+    * @return The local file URL if successful, otherwise null.
+    */
     public static String deduplicateSubtitleThenStoreToCachefile(
+                                                String subtitleContent,
                                                 final String subtitleUrl,
                                                 final MediaFormat format) {
         File cacheFile = getDeduplicatedCachefileName(subtitleUrl, format);
@@ -264,14 +269,12 @@ public class SubtitleDeduplicator {
             return null;
         }
 
-        String downloadedContent = downloadRemoteText(subtitleUrl);
-
-        String finalContent = deduplicateContent(downloadedContent);
+        String finalContent = deduplicateContent(subtitleContent);
 
         if (null == writeDeduplicatedContentToCachefile(finalContent, cacheFile)) {
             return cacheFilePathForExoplayer;
         } else {
-            LogUtil.logWithMessage("tree-test02", "fail to write cachefile!");
+            LogUtil.logWithMessage("tree-test02", "Failed to write cache file: " + cacheFile.getAbsolutePath());
             return null;
         }
     }
