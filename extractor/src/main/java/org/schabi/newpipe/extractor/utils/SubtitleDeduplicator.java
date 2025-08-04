@@ -254,7 +254,8 @@ public class SubtitleDeduplicator {
 
         String cacheFilePathForExoplayer = "file://" + cacheFile.getAbsolutePath();
 
-        if (true == hasTheSubtitleBeenDeduplicatedBefore(cacheFile)) {
+        int deduplicatedBefore = hasTheSubtitleBeenDeduplicatedBefore(cacheFile);
+        if (0 == deduplicatedBefore) {
             return cacheFilePathForExoplayer;
         }
 
@@ -350,8 +351,21 @@ public class SubtitleDeduplicator {
         return tempCacheFile;
     }
 
-    private static boolean hasTheSubtitleBeenDeduplicatedBefore(File tempCacheFile) {
+    // 0: it has been deduplicated bofore.
+    private static int hasTheSubtitleBeenDeduplicatedBefore(File tempCacheFile) {
         if (tempCacheFile.exists()) {
+            if (true == isFileEmpty(tempCacheFile)) {
+                return 1; // error
+            } else {
+                return 0;
+            }
+        } else {
+            return 2;
+        }
+    }
+
+    private static boolean isFileEmpty(File file) {
+        if(0 == file.length()) {
             return true;
         } else {
             return false;
