@@ -13,13 +13,21 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.schabi.newpipe.extractor.utils.Utils;
 import org.schabi.newpipe.extractor.MediaFormat;
+import org.schabi.newpipe.extractor.NewPipe;
+import org.schabi.newpipe.extractor.downloader.Downloader;
+import org.schabi.newpipe.extractor.downloader.Response;
+import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
 import org.schabi.newpipe.extractor.utils.LogUtil;
 
 /**
@@ -77,7 +85,7 @@ public class SubtitleDeduplicator {
       */
     public static String checkAndDeduplicate(final String remoteSubtitleUrl,
                                             final MediaFormat format) {
-        String downloadedContent = downloadRemoteText(remoteSubtitleUrl);
+        String downloadedContent = downloadRemoteText(remoteSubtitleUrl,3,1000);
         if (null == downloadedContent) {
             return remoteSubtitleUrl;
         }
@@ -117,6 +125,65 @@ public class SubtitleDeduplicator {
             LogUtil.logWithMessage("SubtitleDownloader", "Failed to download subtitle: " + e.getMessage());
             return null;
         }
+    }
+
+    private static String downloadRemoteText(String urlStr, int maxRetries, int initialDelayMillis) {
+        Downloader downloader = NewPipe.getDownloader();
+        if (downloader == null) {
+            LogUtil.logWithMessage("tree-test02", "Downloader not initialized");
+            return null;
+        }
+        // if auto-translate language subtitle, use the bigger data.
+        int delay = initDelayValue(urlStr, initialDelayMillis);
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                Map<String, List<String>> headers = new HashMap<>();
+                headers.put("Accept", Collections.singletonList("text/*"));
+                headers.put("Accept-Language", Collections.singletonList("en-US,en;q=0.9"));
+                Response response = downloader.get(urlStr, headers);
+                if (response.responseCode() == 200) {
+                    return response.responseBody();
+                } else {
+                    LogUtil.logWithMessage("tree-test02-dl", "Attempt " + attempt + " failed with status: " + response.responseCode());
+                    if (response.responseCode() != 503 && response.responseCode() != 429) {
+                        return null;
+                    }
+                }
+            } catch (IOException | ReCaptchaException e) {
+                LogUtil.logWithMessage("tree-test02-dl", "Attempt " + attempt + " failed: " + e.getMessage());
+            }
+            if (attempt < maxRetries) {
+                try {
+                    Thread.sleep(delay);
+                    delay *= 2;
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return null;
+                }
+            }
+        }
+        LogUtil.logWithMessage("tree-test02-dl", "Failed to download subtitle after " + maxRetries + " attempts: " + urlStr);
+        return null;
+    }
+
+    private static boolean isAutoTranslateSubtitleUrl(String urlStr) {
+        if (null != checkAutoTranslateLanguage(urlStr)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static int initDelayValue(String urlStr, int inputDelay) {
+        int initDelay = 0;
+
+        if (true == isAutoTranslateSubtitleUrl(urlStr)) {
+            initDelay = 6500;
+        } else {
+            initDelay = inputDelay;
+        }
+
+        return initDelay;
     }
 
     // make the long url to be short
