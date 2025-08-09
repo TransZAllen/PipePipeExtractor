@@ -85,6 +85,15 @@ public class SubtitleDeduplicator {
       */
     public static String checkAndDeduplicate(final String remoteSubtitleUrl,
                                             final MediaFormat format) {
+        File cacheFile = getDeduplicatedCachefileName(remoteSubtitleUrl, format);
+
+        int deduplicatedBefore = hasTheSubtitleBeenDeduplicatedBefore(cacheFile);
+        // Yes, it has been deduplicated before.
+        if (0 == deduplicatedBefore) {
+            String cacheFilePathForExoplayer = pathUsedByExoplayer(cacheFile);
+            return cacheFilePathForExoplayer;
+        }
+
         String downloadedContent = downloadRemoteText(remoteSubtitleUrl,3,1000);
         if (null == downloadedContent) {
             return remoteSubtitleUrl;
@@ -94,10 +103,11 @@ public class SubtitleDeduplicator {
             return remoteSubtitleUrl;
         }
 
-        String localSubtitleUrl = deduplicateSubtitleThenStoreToCachefile(
-                                                        downloadedContent,
-                                                        remoteSubtitleUrl,
-                                                        format);
+        String finalContent = deduplicateContent(downloadedContent);
+
+        String localSubtitleUrl = storeItToCacheDir(finalContent,
+                                                    remoteSubtitleUrl,
+                                                    format);
         if (null == localSubtitleUrl) {
             return remoteSubtitleUrl;
         }
@@ -301,31 +311,25 @@ public class SubtitleDeduplicator {
         return key;
     }
 
-    /**
-    * Deduplicates subtitle content and stores it in a local cache file.
-    * @return The local file URL if successful, otherwise null.
-    */
-    public static String deduplicateSubtitleThenStoreToCachefile(
-                                                String subtitleContent,
-                                                final String subtitleUrl,
-                                                final MediaFormat format) {
+    private static String pathUsedByExoplayer(File subtitleCacheFile) {
+        String path = "file://" + subtitleCacheFile.getAbsolutePath();
+
+        return path;
+    }
+
+    private static String storeItToCacheDir(String subtitleContent,
+                                            String subtitleUrl,
+                                            MediaFormat format) {
         File cacheFile = getDeduplicatedCachefileName(subtitleUrl, format);
 
-        String cacheFilePathForExoplayer = "file://" + cacheFile.getAbsolutePath();
-
-        int deduplicatedBefore = hasTheSubtitleBeenDeduplicatedBefore(cacheFile);
-        if (0 == deduplicatedBefore) {
-            return cacheFilePathForExoplayer;
-        }
+        String cacheFilePathForExoplayer = pathUsedByExoplayer(cacheFile);
 
         if (false == ensureItsParentDirExist(cacheFile)) {
             LogUtil.logWithMessage("tree-test02", cacheFile.getAbsolutePath() + ": its parent dir Not exist!");
             return null;
         }
 
-        String finalContent = deduplicateContent(subtitleContent);
-
-        if (null == writeDeduplicatedContentToCachefile(finalContent, cacheFile)) {
+        if (null == writeDeduplicatedContentToCachefile(subtitleContent, cacheFile)) {
             return cacheFilePathForExoplayer;
         } else {
             LogUtil.logWithMessage("tree-test02", "Failed to write cache file: " + cacheFile.getAbsolutePath());
