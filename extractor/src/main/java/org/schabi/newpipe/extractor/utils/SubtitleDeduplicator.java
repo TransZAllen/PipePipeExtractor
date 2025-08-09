@@ -186,19 +186,6 @@ public class SubtitleDeduplicator {
         return initDelay;
     }
 
-    // make the long url to be short
-    private static String md5(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] digest = md.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder();
-            for (byte b : digest) sb.append(String.format("%02x", b));
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("MD5 not supported", e);
-        }
-    }
-
     public static boolean containsDuplicateTtmlEntries(File subtitleFile) {
         if (subtitleFile == null || !subtitleFile.exists()) return false;
 
@@ -349,8 +336,8 @@ public class SubtitleDeduplicator {
     private static String computeShorterFilename(String subtitleUrl,
                                                 final MediaFormat format,
                                                 String tag0) {
-        String md5Url = md5(subtitleUrl);
-        String baseName = md5Url;
+        String videoId = extractVideoId(subtitleUrl);
+        String baseName = videoId;
 
         //String fileExtension = "." + format;
         //String filename = baseName + fileExtension;
@@ -401,6 +388,15 @@ public class SubtitleDeduplicator {
         }
 
         return languageCode;
+    }
+
+    // Extract the videoId (e.g., "lUDPjyfmJrs") from a subtitle URL
+    // (e.g., .../api/timedtext?v=lUDPjyfmJrs)
+    // using the 'v' parameter, for use in generating unique filenames.
+    private static String extractVideoId(String remoteSubtitleUrl) {
+        String key = "v";
+        String videoId = extractLanguageCode(remoteSubtitleUrl, key);
+        return videoId;
     }
 
     private static File getDeduplicatedCachefileName(String subtitleUrl, MediaFormat format) {
