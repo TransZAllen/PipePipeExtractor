@@ -23,6 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.schabi.newpipe.extractor.utils.Utils;
+import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper;
 import org.schabi.newpipe.extractor.MediaFormat;
 import org.schabi.newpipe.extractor.NewPipe;
 import org.schabi.newpipe.extractor.downloader.Downloader;
@@ -340,18 +341,19 @@ public class SubtitleDeduplicator {
     private static String computeShorterFilename(String subtitleUrl,
                                                 final MediaFormat format,
                                                 String tag0) {
-        String videoId = extractVideoId(subtitleUrl);
+        String videoId = getVideoId(subtitleUrl);
         String baseName = videoId;
 
         //String fileExtension = "." + format;
         //String filename = baseName + fileExtension;
-        String key = "lang";
-        String languageCode = extractLanguageCode(subtitleUrl, key);
+        String languageCode = getLanguageCode(subtitleUrl);
 
         String autoTranslateLanguage = checkAutoTranslateLanguage(subtitleUrl);
         if (null != autoTranslateLanguage) {
             languageCode = autoTranslateLanguage;
         }
+
+        String key = YoutubeParsingHelper.LANG;
 
         String filename = baseName
                         + "-" + tag0
@@ -364,8 +366,7 @@ public class SubtitleDeduplicator {
     }
 
     private static String checkAutoTranslateLanguage(String subtitleUrl) {
-        String key_autoTranslate = "tlang";
-        String language_autoTranslate = extractLanguageCode(subtitleUrl, key_autoTranslate);
+        String language_autoTranslate = getAutoTranslateLanguage(subtitleUrl);
 
         if(true == stringIsNullOrEmpty(language_autoTranslate)) {
             return null;
@@ -374,32 +375,23 @@ public class SubtitleDeduplicator {
         }
     }
 
-    private static String extractLanguageCode(String remoteSubtitleUrl, String key) {
+    private static String getLanguageCode(String remoteSubtitleUrl) {
         String languageCode = null;
-
-        try {
-            URL url = Utils.stringToURL(remoteSubtitleUrl);
-
-            String value = Utils.getQueryValue(url, key);
-
-            languageCode = value;
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            languageCode = "INVALID_URL";
-        } catch (Exception e) {
-            e.printStackTrace();
-            languageCode = "UNKNOWN_ERROR";
-        }
-
+        languageCode = YoutubeParsingHelper.extractLanguageCode(remoteSubtitleUrl);
         return languageCode;
+    }
+
+    private static String getAutoTranslateLanguage(String remoteSubtitleUrl) {
+        String Auto_Translate = null;
+        Auto_Translate = YoutubeParsingHelper.extractTranslationCode(remoteSubtitleUrl);
+        return Auto_Translate;
     }
 
     // Extract the videoId (e.g., "lUDPjyfmJrs") from a subtitle URL
     // (e.g., .../api/timedtext?v=lUDPjyfmJrs)
-    // using the 'v' parameter, for use in generating unique filenames.
-    private static String extractVideoId(String remoteSubtitleUrl) {
-        String key = "v";
-        String videoId = extractLanguageCode(remoteSubtitleUrl, key);
+    // for use in generating unique filenames.
+    private static String getVideoId(String remoteSubtitleUrl) {
+        String videoId = YoutubeParsingHelper.extractVideoId(remoteSubtitleUrl);
         return videoId;
     }
 
