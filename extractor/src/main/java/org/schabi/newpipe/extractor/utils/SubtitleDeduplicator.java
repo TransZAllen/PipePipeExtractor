@@ -348,21 +348,48 @@ public class SubtitleDeduplicator {
         //String filename = baseName + fileExtension;
         String languageCode = getLanguageCode(subtitleUrl);
 
+        StringBuilder filenameBuilder = getCommonFilename(baseName,tag0,
+                                                    languageCode,format);
+
         String autoTranslateLanguage = checkAutoTranslateLanguage(subtitleUrl);
+
         if (null != autoTranslateLanguage) {
-            languageCode = autoTranslateLanguage;
+            filenameBuilder = addAutoTranslateLanguage(filenameBuilder,
+                                                        autoTranslateLanguage);
         }
 
-        String key = YoutubeParsingHelper.LANG;
-
-        String filename = baseName
-                        + "-" + tag0
-                        + "&" + key + "="
-                        + languageCode
-                        + "&fmt="
-                        + format.getSuffix();
+        String filename = filenameBuilder.toString();
 
         return filename;
+    }
+
+    private static StringBuilder getCommonFilename(String baseName,String tag0,
+                                            String languageCode,
+                                            MediaFormat format) {
+        StringBuilder filenameBuilder = new StringBuilder(baseName);
+        String part0_append = "-" + tag0;
+        filenameBuilder.append(part0_append);
+
+        String key = YoutubeParsingHelper.LANG;
+        //for example: &lang=en
+        String part1_append = "&" + key + "=" + languageCode;
+        filenameBuilder.append(part1_append);
+
+        String part2_append = "&fmt=" + format.getSuffix();
+        filenameBuilder.append(part2_append);
+
+        //the last filename is like: lUDPjyfmJrs-deduplicated&lang=en&fmt=ttml
+
+        return filenameBuilder;
+    }
+
+    private static StringBuilder addAutoTranslateLanguage(StringBuilder filenameBuilder,
+                                                    String autoTranslateLanguage) {
+        String key = YoutubeParsingHelper.TLANG;
+        String part0_append = "&" + key + "=" + autoTranslateLanguage;
+        filenameBuilder.append(part0_append);
+
+        return filenameBuilder;
     }
 
     private static String checkAutoTranslateLanguage(String subtitleUrl) {
