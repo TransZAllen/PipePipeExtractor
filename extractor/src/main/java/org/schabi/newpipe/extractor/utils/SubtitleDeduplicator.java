@@ -29,7 +29,6 @@ import org.schabi.newpipe.extractor.NewPipe;
 import org.schabi.newpipe.extractor.downloader.Downloader;
 import org.schabi.newpipe.extractor.downloader.Response;
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
-import org.schabi.newpipe.extractor.utils.LogUtil;
 
 /**
  * SubtitleDeduplicator.java
@@ -47,6 +46,8 @@ import org.schabi.newpipe.extractor.utils.LogUtil;
  */
 
 public class SubtitleDeduplicator {
+    private static final String TAG = "SubtitleDeduplicator";
+
     private static String subCacheDir = "subtitle_cache";
 
     private static File CACHE_DIR = null;
@@ -133,7 +134,7 @@ public class SubtitleDeduplicator {
             }
             return sb.toString();
         } catch (IOException e) {
-            LogUtil.logWithMessage("SubtitleDownloader", "Failed to download subtitle: " + e.getMessage());
+            System.err.println(TAG + ": Failed to download subtitle: " + e.getMessage());
             return null;
         }
     }
@@ -141,7 +142,7 @@ public class SubtitleDeduplicator {
     private static String downloadRemoteText(String urlStr, int maxRetries, int initialDelayMillis) {
         Downloader downloader = NewPipe.getDownloader();
         if (downloader == null) {
-            LogUtil.logWithMessage("tree-test02", "Downloader not initialized");
+            System.err.println(TAG + ": Downloader not initialized");
             return null;
         }
         // if auto-translate language subtitle, use the bigger data.
@@ -155,13 +156,13 @@ public class SubtitleDeduplicator {
                 if (response.responseCode() == 200) {
                     return response.responseBody();
                 } else {
-                    LogUtil.logWithMessage("tree-test02-dl", "Attempt " + attempt + " failed with status: " + response.responseCode());
+                    System.err.println(TAG + ": Attempt " + attempt + " failed with status: " + response.responseCode());
                     if (response.responseCode() != 503 && response.responseCode() != 429) {
                         return null;
                     }
                 }
             } catch (IOException | ReCaptchaException e) {
-                LogUtil.logWithMessage("tree-test02-dl", "Attempt " + attempt + " failed: " + e.getMessage());
+                System.err.println(TAG + ": Attempt " + attempt + " failed: " + e.getMessage());
             }
             if (attempt < maxRetries) {
                 try {
@@ -173,7 +174,7 @@ public class SubtitleDeduplicator {
                 }
             }
         }
-        LogUtil.logWithMessage("tree-test02-dl", "Failed to download subtitle after " + maxRetries + " attempts: " + urlStr);
+        System.err.println(TAG + ": Failed to download subtitle after " + maxRetries + " attempts: " + urlStr);
         return null;
     }
 
@@ -326,14 +327,13 @@ public class SubtitleDeduplicator {
         String cacheFilePathForExoplayer = pathUsedByExoplayer(cacheFile);
 
         if (false == ensureItsParentDirExist(cacheFile)) {
-            LogUtil.logWithMessage("tree-test02", cacheFile.getAbsolutePath() + ": its parent dir Not exist!");
             return null;
         }
 
         if (null == writeDeduplicatedContentToCachefile(subtitleContent, cacheFile)) {
             return cacheFilePathForExoplayer;
         } else {
-            LogUtil.logWithMessage("tree-test02", "Failed to write cache file: " + cacheFile.getAbsolutePath());
+            System.err.println(TAG + ": Failed to write cache file: " + cacheFile.getAbsolutePath());
             return null;
         }
     }
@@ -490,9 +490,8 @@ public class SubtitleDeduplicator {
             LogUtil.logWithMessage("tree-test02", "succeed to write the cache file: " + tempFile.getAbsolutePath());
             return null;//ok
         } catch (IOException e) {
-            //LogUtil.logWithMessage("tree-test02", "fail to write the cache file: " + e.getMessage());
-            e.printStackTrace();
             String errorMessage = e.getMessage();
+            System.err.println(TAG + ": Failed to write cache file: " + errorMessage);
             return errorMessage;
         }
     }
