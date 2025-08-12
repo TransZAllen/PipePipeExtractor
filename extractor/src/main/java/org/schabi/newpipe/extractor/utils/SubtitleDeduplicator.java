@@ -85,8 +85,8 @@ public class SubtitleDeduplicator {
       * @return The local file URL if deduplication and caching succeed,
                 otherwise the original URL.
       */
-    public static String checkAndDeduplicate(final String remoteSubtitleUrl,
-                                            final MediaFormat format) {
+    public static String checkAndDeduplicate(String remoteSubtitleUrl,
+                                             MediaFormat format) {
         File cacheFile = getDeduplicatedCachefileName(remoteSubtitleUrl, format);
 
         int deduplicatedBefore = hasTheSubtitleBeenDeduplicatedBefore(cacheFile);
@@ -339,7 +339,7 @@ public class SubtitleDeduplicator {
     }
 
     private static String computeShorterFilename(String subtitleUrl,
-                                                final MediaFormat format,
+                                                MediaFormat format,
                                                 String tag0) {
         String videoId = getVideoId(subtitleUrl);
         String baseName = videoId;
