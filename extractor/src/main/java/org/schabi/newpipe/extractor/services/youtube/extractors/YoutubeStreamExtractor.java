@@ -680,9 +680,6 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                         // Remove translation language
                         .replaceAll("&tlang=[^&]*", "");
 
-                String logMessage_01 = baseUrl;
-                logMessage_01 = cleanUrl;
-
                 String remoteSubtitleUrl = cleanUrl + "&fmt=" + format.getSuffix();
 
                 String subtitleUrl = null;
