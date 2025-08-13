@@ -33,16 +33,17 @@ import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
 /**
  * SubtitleDeduplicator.java
  *
- * This file is responsible for checking if the subtitles
+ * 1. This file is responsible for checking if the subtitles
  * contain any duplicate entries.
- * 1) If duplicates are found, it performs the following steps:
- *    downloads the subtitle, deduplicates it,
- *    and stores it locally.
- * 2) If no duplicates are found, no action is taken.
+ *   a) If duplicates are found, it performs the following steps:
+ *      downloads the subtitle, deduplicates it,
+ *      and stores it locally.
+ *   b) If no duplicates are found, no action is taken.
  *
- * Core Functions:
+ * 2. Core Functions:
  * - checkAndDeduplicate(): Checks for duplicate subtitles
  *   and handles downloading, deduplication, and local storage.
+ *
  */
 
 public class SubtitleDeduplicator {
@@ -50,6 +51,9 @@ public class SubtitleDeduplicator {
 
     private static String subCacheDir = "subtitle_cache";
 
+    // There are two cache paths to choose:
+    // 1) Here, init to call Default;
+    // 2) Other places, call NotDefault before checkAndDeduplicate().
     private static File CACHE_DIR = null;
     static {
         setCacheDirPathDefault();
@@ -63,6 +67,7 @@ public class SubtitleDeduplicator {
     }
 
     // e.g. //data/user/0/***/cache/subtitle_cache
+    // generally, it needs root permission.
     public static void setCacheDirPathDefault() {
         File defaultFile = new File(System.getProperty("java.io.tmpdir"));
         String defaultPath = defaultFile.getAbsolutePath();
