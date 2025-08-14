@@ -48,6 +48,7 @@ import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
 
 public class SubtitleDeduplicator {
     private static final String TAG = "SubtitleDeduplicator";
+    public static final String LOCAL_SUBTITLE_URL_PREFIX = "file://";
 
     private static String subCacheDir = "subtitle_cache";
 
@@ -319,7 +320,7 @@ public class SubtitleDeduplicator {
     }
 
     private static String pathUsedByExoplayer(File subtitleCacheFile) {
-        String path = "file://" + subtitleCacheFile.getAbsolutePath();
+        String path = LOCAL_SUBTITLE_URL_PREFIX + subtitleCacheFile.getAbsolutePath();
 
         return path;
     }
