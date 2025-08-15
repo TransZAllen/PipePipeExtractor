@@ -493,7 +493,6 @@ public class SubtitleDeduplicator {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
                 new FileOutputStream(tempFile), StandardCharsets.UTF_8))) {
             writer.write(content);
-            LogUtil.logWithMessage("tree-test02", "succeed to write the cache file: " + tempFile.getAbsolutePath());
             return null;//ok
         } catch (IOException e) {
             String errorMessage = e.getMessage();
