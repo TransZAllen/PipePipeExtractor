@@ -172,6 +172,7 @@ public class SubtitleDeduplicator {
                 headers.put("Accept", Collections.singletonList("text/*"));
                 headers.put("Accept-Language", Collections.singletonList("en-US,en;q=0.9"));
                 Response response = downloader.get(urlStr, headers);
+                System.out.println(TAG + ": code=" + response.responseCode() + ", urlStr==" + urlStr);
                 if (response.responseCode() == 200) {
                     return response.responseBody();
                 } else {
