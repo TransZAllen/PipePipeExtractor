@@ -96,12 +96,12 @@ public class SubtitleDeduplicator {
                                              MediaFormat format) {
         File cacheFile = getDeduplicatedCachefileName(remoteSubtitleUrl, format);
 
-        int deduplicatedBefore = hasTheSubtitleBeenDeduplicatedBefore(cacheFile);
+        /*int deduplicatedBefore = hasTheSubtitleBeenDeduplicatedBefore(cacheFile);
         // Yes, it has been deduplicated before.
         if (0 == deduplicatedBefore) {
             String cacheFilePathForExoplayer = pathUsedByExoplayer(cacheFile);
             return cacheFilePathForExoplayer;
-        }
+        }*/
 
         String downloadedContent = downloadRemoteText(remoteSubtitleUrl,3,1000);
         if (null == downloadedContent) {
