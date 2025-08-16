@@ -746,17 +746,11 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                                         MediaFormat format) {
         String remoteUrl = getUrlHasBeenAutoTranslated(subtitle, languageCode);
 
-        //String maybeLocalUrl = SubtitleDeduplicator.checkAndDeduplicate(remoteUrl, format);
+        String maybeLocalUrl = SubtitleDeduplicator.checkAndDeduplicate(remoteUrl, format);
 
-        //String finalUrl = maybeLocalUrl;
+        String finalUrl = maybeLocalUrl;
 
-        //return finalUrl;
-
-        // Temporary:
-        // Skip deduplication for auto-translated subtitles
-        // to avoid frequent HTTP 429 errors
-        // and long delays (6.5s/13s/26s) that degrade user experience.
-        return remoteUrl;
+        return finalUrl;
     }
 
     @Override
