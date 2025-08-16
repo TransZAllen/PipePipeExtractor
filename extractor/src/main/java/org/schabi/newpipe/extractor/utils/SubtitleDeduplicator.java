@@ -29,6 +29,7 @@ import org.schabi.newpipe.extractor.NewPipe;
 import org.schabi.newpipe.extractor.downloader.Downloader;
 import org.schabi.newpipe.extractor.downloader.Response;
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
+import org.schabi.newpipe.extractor.ServiceList;
 
 /**
  * SubtitleDeduplicator.java
@@ -156,6 +157,18 @@ public class SubtitleDeduplicator {
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 Map<String, List<String>> headers = new HashMap<>();
+                String authHeader = null;
+                try {
+                    authHeader = YoutubeParsingHelper.getAuthorizationHeader(ServiceList.YouTube.getTokens());
+                } catch (NoSuchAlgorithmException e) {
+                    System.err.println(TAG + ": Failed to generate Authorization header: " + e.getMessage());
+                    // Fallback: proceed without auth header if algorithm unavailable
+                }
+                if (authHeader != null) {
+                    headers.put("Authorization", Collections.singletonList(authHeader));
+                } else {
+                    System.err.println(TAG + ": authHeader is null");
+                }
                 headers.put("Accept", Collections.singletonList("text/*"));
                 headers.put("Accept-Language", Collections.singletonList("en-US,en;q=0.9"));
                 Response response = downloader.get(urlStr, headers);
