@@ -1669,7 +1669,7 @@ YoutubeParsingHelper {
      * @param name The X-YouTube-Client-Name value.
      * @param version X-YouTube-Client-Version value.
      */
-    static Map<String, List<String>> getClientHeaders(@Nonnull final String name,
+    public static Map<String, List<String>> getClientHeaders(@Nonnull final String name,
                                                       @Nonnull final String version) {
         return Map.of("X-YouTube-Client-Name", List.of(name),
                 "X-YouTube-Client-Version", List.of(version));

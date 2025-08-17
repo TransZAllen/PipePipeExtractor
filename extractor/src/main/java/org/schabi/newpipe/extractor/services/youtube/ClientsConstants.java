@@ -1,6 +1,6 @@
 package org.schabi.newpipe.extractor.services.youtube;
 
-final class ClientsConstants {
+public final class ClientsConstants {
     private ClientsConstants() {
     }
 
@@ -13,17 +13,17 @@ final class ClientsConstants {
 
     // WEB (YouTube desktop) client fields
 
-    static final String WEB_CLIENT_ID = "1";
+    public static final String WEB_CLIENT_ID = "1";
     static final String WEB_CLIENT_NAME = "WEB";
     /**
      * The client version for InnerTube requests with the {@code WEB} client, used as the last
      * fallback if the extraction of the real one failed.
      */
-    static final String WEB_HARDCODED_CLIENT_VERSION = "2.20250122.04.00";
+    public static final String WEB_HARDCODED_CLIENT_VERSION = "2.20250122.04.00";
 
     // WEB_REMIX (YouTube Music) client fields
 
-    static final String WEB_REMIX_CLIENT_ID = "67";
+    public static final String WEB_REMIX_CLIENT_ID = "67";
     static final String WEB_REMIX_CLIENT_NAME = "WEB_REMIX";
     static final String WEB_REMIX_HARDCODED_CLIENT_VERSION = "1.20250122.01.00";
 
@@ -47,7 +47,7 @@ final class ClientsConstants {
 
     // IOS (iOS YouTube app) client fields
 
-    static final String IOS_CLIENT_ID = "5";
+    public static final String IOS_CLIENT_ID = "5";
     static final String IOS_CLIENT_NAME = "IOS";
 
     /**
@@ -59,7 +59,7 @@ final class ClientsConstants {
      * Store page of the YouTube app</a>, in the {@code What’s New} section.
      * </p>
      */
-    static final String IOS_CLIENT_VERSION = "20.03.02";
+    public static final String IOS_CLIENT_VERSION = "20.03.02";
 
     /**
      * The device machine id for the iPhone 15 Pro Max, used to get 60fps with the {@code iOS}
@@ -102,7 +102,7 @@ final class ClientsConstants {
 
     // ANDROID (Android YouTube app) client fields
 
-    static final String ANDROID_CLIENT_ID = "3";
+    public static final String ANDROID_CLIENT_ID = "3";
     static final String ANDROID_CLIENT_NAME = "ANDROID";
 
     /**
@@ -114,5 +114,5 @@ final class ClientsConstants {
      * such as <a href="https://www.apkmirror.com/apk/google-inc/youtube/">APKMirror</a>.
      * </p>
      */
-    static final String ANDROID_CLIENT_VERSION = "19.28.35";
+    public static final String ANDROID_CLIENT_VERSION = "19.28.35";
 }

@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
 
 import org.schabi.newpipe.extractor.utils.Utils;
 import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper;
+import org.schabi.newpipe.extractor.services.youtube.ClientsConstants;
 import org.schabi.newpipe.extractor.MediaFormat;
 import org.schabi.newpipe.extractor.NewPipe;
 import org.schabi.newpipe.extractor.downloader.Downloader;
@@ -155,6 +156,7 @@ public class SubtitleDeduplicator {
         // if auto-translate language subtitle, use the bigger data.
         int delay = initDelayValue(urlStr, initialDelayMillis);
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            Response response = null; // To capture response for logging
             try {
                 Map<String, List<String>> headers = new HashMap<>();
                 String authHeader = null;
@@ -166,12 +168,18 @@ public class SubtitleDeduplicator {
                 }
                 if (authHeader != null) {
                     headers.put("Authorization", Collections.singletonList(authHeader));
+                    //headers.putAll(YoutubeParsingHelper.getClientHeaders(ClientsConstants.ANDROID_CLIENT_ID, ClientsConstants.ANDROID_CLIENT_VERSION));
+                    //headers.putAll(YoutubeParsingHelper.getClientHeaders(ClientsConstants.WEB_REMIX_CLIENT_ID, ClientsConstants.WEB_HARDCODED_CLIENT_VERSION));
+                    //headers.putAll(YoutubeParsingHelper.getClientHeaders(ClientsConstants.WEB_CLIENT_ID, ClientsConstants.WEB_HARDCODED_CLIENT_VERSION));
+                    headers.putAll(YoutubeParsingHelper.getClientHeaders(ClientsConstants.IOS_CLIENT_ID, ClientsConstants.IOS_CLIENT_VERSION));
+                    headers.put("User-Agent", Collections.singletonList("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36"));
+                    System.out.println(TAG + ": Headers applied: " + headers);
                 } else {
                     System.err.println(TAG + ": authHeader is null");
                 }
                 headers.put("Accept", Collections.singletonList("text/*"));
                 headers.put("Accept-Language", Collections.singletonList("en-US,en;q=0.9"));
-                Response response = downloader.get(urlStr, headers);
+                response = downloader.get(urlStr, headers);
                 System.out.println(TAG + ": code=" + response.responseCode() + ", urlStr==" + urlStr);
                 if (response.responseCode() == 200) {
                     return response.responseBody();
@@ -182,7 +190,8 @@ public class SubtitleDeduplicator {
                     }
                 }
             } catch (IOException | ReCaptchaException e) {
-                System.err.println(TAG + ": Attempt " + attempt + " failed: " + e.getMessage());
+                String responseCode = (response != null) ? String.valueOf(response.responseCode()) : "N/A";
+                System.err.println(TAG + ": Attempt " + attempt + " failed: " + e.getMessage() + ", HTTP Status: " + responseCode);
             }
             if (attempt < maxRetries) {
                 try {
