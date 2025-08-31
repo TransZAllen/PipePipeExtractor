@@ -29,6 +29,7 @@ import org.schabi.newpipe.extractor.MediaFormat;
 import org.schabi.newpipe.extractor.NewPipe;
 import org.schabi.newpipe.extractor.downloader.Downloader;
 import org.schabi.newpipe.extractor.downloader.Response;
+import org.schabi.newpipe.extractor.exceptions.ExtractionException;
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
 import org.schabi.newpipe.extractor.ServiceList;
 
@@ -159,23 +160,17 @@ public class SubtitleDeduplicator {
             Response response = null; // To capture response for logging
             try {
                 Map<String, List<String>> headers = new HashMap<>();
-                String authHeader = null;
-                try {
-                    authHeader = YoutubeParsingHelper.getAuthorizationHeader(ServiceList.YouTube.getTokens());
-                } catch (NoSuchAlgorithmException e) {
-                    System.err.println(TAG + ": Failed to generate Authorization header: " + e.getMessage());
-                    // Fallback: proceed without auth header if algorithm unavailable
-                }
-                if (authHeader != null) {
-                    headers.put("Authorization", Collections.singletonList(authHeader));
-                    //headers.putAll(YoutubeParsingHelper.getClientHeaders(ClientsConstants.ANDROID_CLIENT_ID, ClientsConstants.ANDROID_CLIENT_VERSION));
-                    //headers.putAll(YoutubeParsingHelper.getClientHeaders(ClientsConstants.WEB_REMIX_CLIENT_ID, ClientsConstants.WEB_HARDCODED_CLIENT_VERSION));
-                    //headers.putAll(YoutubeParsingHelper.getClientHeaders(ClientsConstants.WEB_CLIENT_ID, ClientsConstants.WEB_HARDCODED_CLIENT_VERSION));
-                    headers.putAll(YoutubeParsingHelper.getClientHeaders(ClientsConstants.IOS_CLIENT_ID, ClientsConstants.IOS_CLIENT_VERSION));
-                    headers.put("User-Agent", Collections.singletonList("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36"));
-                    System.out.println(TAG + ": Headers applied: " + headers);
+                if (ServiceList.YouTube.hasTokens()) {
+                    try {
+                        YoutubeParsingHelper.addLoggedInHeaders(headers);
+                        //headers.putAll(YoutubeParsingHelper.getClientHeaders(ClientsConstants.IOS_CLIENT_ID, ClientsConstants.IOS_CLIENT_VERSION));
+                        //headers.put("User-Agent", Collections.singletonList("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36"));
+                        System.out.println(TAG + ": Headers applied: " + headers);
+                    } catch (ExtractionException e) {
+                        System.err.println(TAG + ": Failed to add logged-in headers: " + e.getMessage());
+                    }
                 } else {
-                    System.err.println(TAG + ": authHeader is null");
+                    System.err.println(TAG + ": No YouTube tokens available, proceeding without auth");
                 }
                 headers.put("Accept", Collections.singletonList("text/*"));
                 headers.put("Accept-Language", Collections.singletonList("en-US,en;q=0.9"));
