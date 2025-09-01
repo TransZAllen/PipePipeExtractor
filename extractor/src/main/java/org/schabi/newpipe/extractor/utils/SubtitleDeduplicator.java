@@ -110,9 +110,21 @@ public class SubtitleDeduplicator {
             return remoteSubtitleUrl;
         }
 
+        // Comment out this code to replace the remote subtitle URL
+        // with the local subtitle URL
+        // for displaying subtitles and manually downloading
+        // the subtitle file (*.srt).
+        // This is done to solve the issue where auto-translated
+        // subtitles cannot be displayed correctly on the screen.
+        // The success rate of using the downloadRemoteText() method
+        // to convert remote subtitles into local subtitles
+        // is much higher than the success rate of the display module
+        // directly parsing the remote subtitle URL.
+        /*
         if (false == containsDuplicatedEntries(downloadedContent)) {
             return remoteSubtitleUrl;
         }
+        */
 
         String finalContent = deduplicateContent(downloadedContent);
 
