@@ -695,7 +695,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                 hasFoundContentLanguage = hasFoundContentLanguage || contentLanguage.equals(languageCode);
                 if (translatableSubtitle == null) {
                     translatableSubtitle = subtitlesToReturn.get(subtitlesToReturn.size() - 1);
-                    translatableSubtitle = useRemoteUrlToAutoTranslate(translatableSubtitle,
+                    translatableSubtitle = newSubtitleWithNewUrl(translatableSubtitle,
                                                                         remoteSubtitleUrl);
                 }
             }
@@ -703,7 +703,9 @@ public class YoutubeStreamExtractor extends StreamExtractor {
 
         if (translatableSubtitle != null && !hasFoundContentLanguage) {
             String subtitleUrl = null;
-            subtitleUrl = getAutoTranslateUrl(translatableSubtitle, contentLanguage, format);
+            subtitleUrl = buildFinalAutoTranslateUrl(translatableSubtitle,
+                                                    contentLanguage,
+                                                    format);
 
             subtitlesToReturn.add(new SubtitlesStream.Builder()
                     .setContent(subtitleUrl, true)
@@ -716,8 +718,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
         return subtitlesToReturn;
     }
 
-    // update translatableSubtitle's content
-    private SubtitlesStream updateTranslatableSubtitleContent(
+    private SubtitlesStream copySubtitleButReplaceItsUrl(
                                                         SubtitlesStream subtitle,
                                                         String newSubtitleUrl) {
         return new SubtitlesStream.Builder()
@@ -728,23 +729,31 @@ public class YoutubeStreamExtractor extends StreamExtractor {
             .build();
     }
 
-    private SubtitlesStream useRemoteUrlToAutoTranslate(SubtitlesStream subtitle,
+    // Returns a new SubtitlesStream with its URL replaced
+    // by the given remoteUrl.
+    private SubtitlesStream newSubtitleWithNewUrl(SubtitlesStream subtitle,
                                                         String remoteUrl) {
-        return updateTranslatableSubtitleContent(subtitle,remoteUrl);
+        return copySubtitleButReplaceItsUrl(subtitle,remoteUrl);
     }
 
-    private String getUrlHasBeenAutoTranslated(SubtitlesStream subtitle, String languageCode) {
-        String initSubtitleUrl = subtitle.getContent();
+    private String newUrlOfAutoTranslate(SubtitlesStream subtitle,
+                                         String languageCode) {
+        String initRemoteUrl = subtitle.getContent();
 
-        String autoTranslateUrl = initSubtitleUrl + "&tlang=" + languageCode;
+        String autoTranslateUrl = initRemoteUrl + "&tlang=" + languageCode;
 
         return autoTranslateUrl;
     }
 
-    private String getAutoTranslateUrl( SubtitlesStream subtitle,
+    /*
+     * Build the final URL for an auto-translated subtitle:
+     * @return      1) If duplicate, return the deduplicated local URL;
+     *              2) Else, return the remote URL.
+     */
+    private String buildFinalAutoTranslateUrl( SubtitlesStream subtitle,
                                         String languageCode,
                                         MediaFormat format) {
-        String remoteUrl = getUrlHasBeenAutoTranslated(subtitle, languageCode);
+        String remoteUrl = newUrlOfAutoTranslate(subtitle, languageCode);
 
         String maybeLocalUrl = SubtitleDeduplicator.checkAndDeduplicate(remoteUrl, format);
 
